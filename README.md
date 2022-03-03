@@ -1,6 +1,6 @@
 # Fptn HTTP DoS attack utility
 
-By default, each worker creates one keep alive connection. This means, multiple HTTP requests can be done using one TCP connection. On worker, requests are executed in infinite loop. Keep alive can be efficient in sites with rate limit for number of connections from one IP. Established connections can be then used to create a lot of requests then.
+By default each worker creates one keep alive connection. This means multiple HTTP requests can be done using one TCP connection. On worker, requests are executed in infinite loop. Keep alive can be efficient in sites with rate limit for number of connections from one IP. Established connections can be then used to create a lot of requests then.
 
 If keep alive is disabled, each request initiates a new TCP connection. Then `workers*requests` number of connections per URL is created.
 
