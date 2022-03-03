@@ -130,6 +130,7 @@ func runWorker(id int, site *Site) {
 
 func printStatus() {
 	for {
+		fmt.Printf("\033[H\033[2J")
 		fmt.Printf("==> fptn attack <==\n\n")
 		fmt.Printf("Workers\tReqs\tErrors\tURL\n")
 
@@ -139,8 +140,6 @@ func printStatus() {
 				site.requests, site.errors, site.url)
 		}
 		time.Sleep(100 * time.Millisecond)
-		//fmt.Printf("\033[%dA", len(sites))
-		fmt.Printf("\033[H\033[2J")
 	}
 }
 
