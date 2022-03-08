@@ -4,7 +4,7 @@ Fptn is a simple HTTP DoS utility which can create a lot of different kinds of H
 
 Requests are executed in loop on workers (concurrent go routines). Default number of workers is 20 per URL, but can be set to any number with `-workers` param.
 
-Random content payload is attached to each request by default. It's 1MB in size, but can be changed with parameter `-payload-length` (in kB) or disabled with `-send-payload=false`.
+Random content payload is attached to each request by default. It's 1MB in size, but can be changed with parameter `-payload-length` (in kB) or disabled with `-payload-length=0`.
 
 ## Build
 
@@ -39,9 +39,7 @@ Other parameters to `fptn`:
   -method string
     	HTTP method to use. Use HEAD for low bandwidth attacks (default "GET")
   -payload-length int
-    	Payload length in kilobytes (default 1024)
-  -send-payload
-    	Attach payload with random content to each request (default true)
+    	Payload length in kilobytes. Random content payload is attached to each request. Disable payload with value 0 (default 1024)
   -site string
     	Site URL to attack (default "https://kremlin.ru")
   -sites-file string

