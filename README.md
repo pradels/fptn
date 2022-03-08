@@ -32,6 +32,8 @@ Other parameters to `fptn`:
 ```
   -delay int
     	Sleep time in milliseconds between each request per worker. Can be increased for keep-alive attacks similar to slowloris
+  -error-file string
+    	Where to write all errors encountered. File is truncated on each execution (default "/dev/null")
   -keep-alive
     	Whether to use keep-alive connections (true), or initiate new TCP connection on each request (false) (default true)
   -method string

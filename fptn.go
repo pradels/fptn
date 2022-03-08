@@ -31,6 +31,7 @@ var (
 	HTTPMethod        *string
 	sendPayload       *bool
 	payloadLength     *int
+	errorFile         *os.File
 )
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 	HTTPMethod = flag.String("method", "GET", "HTTP method to use. Use HEAD for low bandwidth attacks")
 	sendPayload = flag.Bool("send-payload", true, "Attach payload with random content to each request")
 	payloadLength = flag.Int("payload-length", 1024, "Payload length in kilobytes")
+	errorFilename := flag.String("error-file", "/dev/null", "Where to write all errors encountered. File is truncated on each execution")
 	flag.Parse()
 
 	delay = time.Duration(*delayFlag) * time.Millisecond
@@ -54,6 +56,12 @@ func init() {
 			url:    *site,
 			active: make(map[int]bool),
 		}}
+	}
+
+	errorFile, err = os.Create(*errorFilename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to open error file: %s\n", err)
+		os.Exit(1)
 	}
 
 	tr := &http.Transport{
@@ -124,6 +132,7 @@ func runWorker(id int, site *Site) {
 			site.mutex.Unlock()
 
 			errors++
+			fmt.Fprintf(errorFile, "[%s] %s\n", site.url, err)
 			time.Sleep(time.Duration(errors) * time.Second)
 			continue
 		}
