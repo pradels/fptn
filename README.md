@@ -29,13 +29,16 @@ $ ./fptn -sites-file=targets.txt
 Other parameters to `fptn`:
 
 ```
-Usage of ./fptn:
   -delay int
     	Sleep time in milliseconds between each request per worker. Can be increased for keep-alive attacks similar to slowloris
   -keep-alive
     	Whether to use keep-alive connections (true), or initiate new TCP connection on each request (false) (default true)
   -method string
-    	HTTP method to use. Can be HEAD for low bandwidth attacks. POST payloads are not implemented (default "GET")
+    	HTTP method to use. Use HEAD for low bandwidth attacks (default "GET")
+  -payload-length int
+    	Payload length in kilobytes (default 1024)
+  -send-payload
+    	Attach payload with random content to each request (default true)
   -site string
     	Site URL to attack (default "https://kremlin.ru")
   -sites-file string

