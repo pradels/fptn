@@ -1,18 +1,32 @@
 # Fptn HTTP DoS attack utility
 
-By default each worker creates one keep alive connection. This means multiple HTTP requests can be done using one TCP connection. On worker, requests are executed in infinite loop. Keep alive can be efficient in sites with rate limit for number of connections from one IP. Established connections can be then used to create a lot of requests.
+Fptn is a simple HTTP DoS utility which can create a lot of different kinds of HTTP requests. By default it utilizes keep-alive connection to keep TCP connections open for multiple requests. This is useful in situations, when firewall blocks multiple connection attempts from one address. Keep alive can be switched off with `-keep-alive=false` param.
 
-If keep alive is disabled, each request initiates a new TCP connection. Then `workers*requests` number of connections per URL is created.
+Requests are executed in loop on workers (concurrent go routines). Default number of workers is 20 per URL, but can be set to any number with `-workers` param.
+
 
 ## Build
 
-Fptn is using packages from standard library only. Build is easy like this:
+Fptn is using packages from standard library only. So build is easy as this:
 
 ```
 go build fptn.go
 ```
 
+
 ## Usage
+
+Prepare list of target URLs in text file, each URL on separate line. Then run `fptn` like this:
+
+```
+$ cat targets.txt
+https://kremlin.ru
+https://mil.ru
+https://rkn.gov.ru
+$ ./fptn -sites-file=targets.txt
+```
+
+Other parameters to `fptn`:
 
 ```
 Usage of ./fptn:

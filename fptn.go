@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"log"
 )
 
 type Site struct {
@@ -93,7 +94,7 @@ func newRequest(url string) (*http.Request, error) {
 func runWorker(id int, site *Site) {
 	req, err := newRequest(site.url)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 
 	site.workers++
