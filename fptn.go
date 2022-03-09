@@ -3,11 +3,10 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
-	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"sync"
@@ -90,14 +89,7 @@ func loadSitesFromFile(filename string) ([]*Site, error) {
 	return sites, nil
 }
 
-func newRequest(url string) (*http.Request, error) {
-	var payload io.Reader
-	if *payloadLength > 0 {
-		b := make([]byte, (*payloadLength)*1024)
-		rand.Read(b)
-		payload = bytes.NewBuffer(b)
-	}
-
+func newRequest(url string, payload io.Reader) (*http.Request, error) {
 	r, err := http.NewRequest(*HTTPMethod, url, payload)
 	if err != nil {
 		return nil, err
@@ -110,28 +102,42 @@ func newRequest(url string) (*http.Request, error) {
 	return r, nil
 }
 
-func runWorker(id int, site *Site) {
-	req, err := newRequest(site.url)
-	if err != nil {
-		log.Fatal(err)
-	}
+func newPayloadReader() *bytes.Reader {
+	buf := make([]byte, (*payloadLength)*1024)
+	rand.Read(buf)
+	return bytes.NewReader(buf)
+}
 
+func runWorker(id int, site *Site) {
 	site.workers++
 
 	// Errors in a row without any successfull request
 	errors := 0
 
+	handleRequestError := func(err error) {
+		site.mutex.Lock()
+		site.errors++
+		delete(site.active, id)
+		site.mutex.Unlock()
+
+		errors++
+		fmt.Fprintf(errorFile, "[%s] %s\n", site.url, err)
+		time.Sleep(time.Duration(errors) * time.Second)
+	}
+
+	payload := newPayloadReader()
+
 	for {
+		payload.Seek(0, 0)
+		req, err := newRequest(site.url, payload)
+		if err != nil {
+			handleRequestError(err)
+			continue
+		}
+
 		resp, err := client.Do(req)
 		if err != nil {
-			site.mutex.Lock()
-			site.errors++
-			delete(site.active, id)
-			site.mutex.Unlock()
-
-			errors++
-			fmt.Fprintf(errorFile, "[%s] %s\n", site.url, err)
-			time.Sleep(time.Duration(errors) * time.Second)
+			handleRequestError(err)
 			continue
 		}
 
@@ -142,6 +148,8 @@ func runWorker(id int, site *Site) {
 		site.requests++
 		site.mutex.Unlock()
 
+		// Read body content and close body so TCP connection
+		// is reused by next requests (if keep-alive enabled).
 		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 
