@@ -6,6 +6,8 @@ Requests are executed in loop on workers (concurrent go routines). Default numbe
 
 Random content payload is attached to each request by default. It's 1MB in size, but can be changed with parameter `-payload-length` (in kB) or disabled with `-payload-length=0`.
 
+All responses from server (not only 2xx) are taken as success. Errors count include only faulty requests without server response (unreachable host, connection reset, ...).
+
 ## Build
 
 Fptn is using packages from standard library only. So build is easy as this:
