@@ -6,8 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"sync"
 	"time"
@@ -49,6 +51,11 @@ func init() {
 	var err error
 	sites, err = loadSitesFromFile(*sitesFile)
 	if err != nil {
+		_, err := neturl.ParseRequestURI(*site)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		sites = []*Site{&Site{
 			url:    *site,
 			active: make(map[int]bool),
@@ -81,8 +88,14 @@ func loadSitesFromFile(filename string) ([]*Site, error) {
 	sites := []*Site{}
 	input := bufio.NewScanner(f)
 	for input.Scan() {
+		url := input.Text()
+		_, err := neturl.ParseRequestURI(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		sites = append(sites, &Site{
-			url:    input.Text(),
+			url:    url,
 			active: make(map[int]bool),
 		})
 	}
