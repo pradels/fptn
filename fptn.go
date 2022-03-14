@@ -16,12 +16,13 @@ import (
 )
 
 type Site struct {
-	url      string
-	workers  int
-	active   map[int]bool
-	requests int
-	errors   int
-	mutex    sync.Mutex
+	url     string
+	workers int
+	active  map[int]bool
+	resp2xx int
+	respAll int
+	errors  int
+	mutex   sync.Mutex
 }
 
 var (
@@ -122,7 +123,9 @@ func newPayloadReader() *bytes.Reader {
 }
 
 func runWorker(id int, site *Site) {
+	site.mutex.Lock()
 	site.workers++
+	site.mutex.Unlock()
 
 	// Errors in a row without any successfull request
 	errors := 0
@@ -158,7 +161,11 @@ func runWorker(id int, site *Site) {
 
 		site.mutex.Lock()
 		site.active[id] = true
-		site.requests++
+		site.respAll++
+		if resp.StatusCode >= 200 &&
+		   resp.StatusCode < 300 {
+			site.resp2xx++
+		}
 		site.mutex.Unlock()
 
 		// Read body content and close body so TCP connection
@@ -174,12 +181,14 @@ func printStatus() {
 	for {
 		fmt.Printf("\033[H\033[2J")
 		fmt.Printf("==> fptn attack <==\n\n")
-		fmt.Printf("Workers\tReqs\tErrors\tURL\n")
+		fmt.Printf("%-10s%-8s%-8s%-8s%s\n", "Workers", "2xx", "3xx-5xx", "Errors", "URL")
 
 		for _, site := range sites {
-			fmt.Printf("%d/%d\t%d\t%d\t%s\n",
-				len(site.active), site.workers,
-				site.requests, site.errors, site.url)
+			fmt.Printf("%-10s%-8d%-8d%-8d%s\n",
+				fmt.Sprintf("%d/%d", len(site.active), site.workers),
+				site.resp2xx,
+				(site.respAll - site.resp2xx),
+				site.errors, site.url)
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
